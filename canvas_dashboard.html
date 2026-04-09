@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dellamed - Canvas Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .kpi-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-delta {
+            font-size: 1rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .kpi-delta.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+        
+        .kpi-delta.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            color: #f8fafc;
+        }
+        
+        .latam-section {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .latam-section h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: #f8fafc;
+        }
+        
+        .country-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .country-card {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .country-flag {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .country-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .country-metric {
+            font-size: 1.5rem;
+            color: #60a5fa;
+            margin-bottom: 5px;
+        }
+        
+        .country-growth {
+            font-size: 0.9rem;
+            color: #22c55e;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        .alerts-section {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        
+        .alerts-section h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: #f8fafc;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+        
+        .alert-content h4 {
+            margin-bottom: 5px;
+            color: #f8fafc;
+        }
+        
+        .alert-content p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 Dellamed Dashboard</h1>
+        <p>Performance & Expansão LATAM</p>
+    </div>
+    
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Faturamento Total</div>
+            <div class="kpi-value">R$ 12.3M</div>
+            <span class="kpi-delta positive">↑ 10.5%</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Pedidos no Mês</div>
+            <div class="kpi-value">1,247</div>
+            <span class="kpi-delta positive">↑ 8.2%</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Ticket Médio</div>
+            <div class="kpi-value">R$ 9,850</div>
+            <span class="kpi-delta positive">↑ 2.1%</span>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Churn</div>
+            <div class="kpi-value">20.82%</div>
+            <span class="kpi-delta negative">↓ 1.5%</span>
+        </div>
+    </div>
+    
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Faturamento por Região</h3>
+            <canvas id="regionChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Evolução de Vendas</h3>
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="latam-section">
+        <h2>🌎 Expansão LATAM</h2>
+        <div class="country-grid">
+            <div class="country-card">
+                <div class="country-flag">🇲🇽</div>
+                <div class="country-name">México</div>
+                <div class="country-metric">US$ 10.9B</div>
+                <div class="country-growth">CAGR 7.9%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 35%"></div>
+                </div>
+            </div>
+            <div class="country-card">
+                <div class="country-flag">🇨🇴</div>
+                <div class="country-name">Colômbia</div>
+                <div class="country-metric">US$ 3.15B</div>
+                <div class="country-growth">CAGR 10.3%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 20%"></div>
+                </div>
+            </div>
+            <div class="country-card">
+                <div class="country-flag">🇦🇷</div>
+                <div class="country-name">Argentina</div>
+                <div class="country-metric">US$ 2.8B</div>
+                <div class="country-growth">CAGR 6.5%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 10%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alerts-section">
+        <h2>🚨 Alertas Prioritários</h2>
+        <div class="alert-item">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <h4>64 pedidos em aberto com data expirada</h4>
+                <p>Revisar comercial - possível divergência SAP</p>
+            </div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-icon">📉</div>
+            <div class="alert-content">
+                <h4>Churn de 20.82% em março</h4>
+                <p>Investigar causas - breakdown por produto/região</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-dot"></div>
+            <span>Live • Atualizado: <span id="lastUpdate">--:--</span></span>
+        </div>
+        <div class="status-item">
+            <span>🔄 Auto-refresh: 5 min</span>
+        </div>
+        <button class="refresh-btn" onclick="location.reload()">Atualizar Agora</button>
+    </div>
+    
+    <script>
+        // Atualiza timestamp
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
+        
+        // Gráfico de Regiões
+        const regionCtx = document.getElementById('regionChart').getContext('2d');
+        new Chart(regionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Brasil', 'Colômbia', 'México', 'Outros'],
+                datasets: [{
+                    data: [65, 20, 12, 3],
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#06b6d4', '#64748b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#e2e8f0' }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de Vendas
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        const salesData = [8.2, 9.1, 10.5, 11.2, 11.8, 12.3];
+        
+        new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Faturamento (R$ M)',
+                    data: salesData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e2e8f0' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    }
+                }
+            }
+        });
+        
+        // Auto-refresh a cada 5 minutos
+        setInterval(() => {
+            location.reload();
+        }, 300000);
+    </script>
+</body>
+</html>
